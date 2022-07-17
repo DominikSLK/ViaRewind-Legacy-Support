@@ -1,5 +1,6 @@
 package de.gerrygames.viarewind.legacysupport.injector;
 
+import com.viaversion.viaversion.api.Via;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -20,6 +21,15 @@ public class NMSReflection {
     private static Method getHandleMethod;
     private static Method sendPacketMethod;
 
+    private static int protocolVersion = -1;
+    private static final int PROTOCOL_1_17 = 755;
+
+    private static String version;
+
+    public static String getVersion() {
+        return version == null ? version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3] : version;
+    }
+
     private static void resolve() throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException {
         Class<?> craftPlayerClass = obc("entity.CraftPlayer");
         Class<?> nmsPlayerClass = nms("EntityPlayer", "net.minecraft.server.level.EntityPlayer");
@@ -32,6 +42,25 @@ public class NMSReflection {
                 .orElseThrow(() -> new NoSuchFieldException("Failed to find PlayerConnection field in EntityPlayer"));
         sendPacketMethod = playerConnectionClass.getMethod("sendPacket", packetClass);
     }
+
+    public static int getProtocolVersion() {
+        return protocolVersion == -1 ?
+                protocolVersion = Via.getAPI().getServerVersion().lowestSupportedVersion() :
+                protocolVersion;
+    }
+
+    public static Class<?> getBlockPositionClass() {
+        try {
+            if (getProtocolVersion() >= PROTOCOL_1_17) {
+                return Class.forName("net.minecraft.core.BlockPosition");
+            }
+            return getLegacyNMSClass("BlockPosition");
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
 
     public static Class<?> getNMSBlock(String name) {
         try {
@@ -58,6 +87,19 @@ public class NMSReflection {
     public static Class<?> getGamePacketClass(String packetType) {
         try {
             return nms(packetType, "net.minecraft.network.protocol.game." + packetType);
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Class<?> getLegacyNMSClass(String name) throws ClassNotFoundException {
+        return Class.forName("net.minecraft.server." + getVersion() + "." + name);
+    }
+
+    public static Class<?> getCraftBukkitClass(String name) {
+        try {
+            return Class.forName("org.bukkit.craftbukkit." + getVersion() + "." + name);
         } catch (ClassNotFoundException ex) {
             ex.printStackTrace();
         }

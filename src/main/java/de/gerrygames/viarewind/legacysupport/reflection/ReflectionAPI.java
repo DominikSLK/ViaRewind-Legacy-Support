@@ -24,33 +24,33 @@ public class ReflectionAPI {
         }
     }
 
-    public static Method pickMethod(Class<?> holder, String... names) {
-        return pickMethod(holder, Arrays.stream(names).map(MethodSignature::new).toArray(MethodSignature[]::new));
-    }
+	public static Method pickMethod(Class<?> holder, String... names) {
+		return pickMethod(holder, Arrays.stream(names).map(MethodSignature::new).toArray(MethodSignature[]::new));
+	}
 
-    /**
-     * Recursively searches for (declared) methods at a specific class and all it's superclasses
-     * @param holder        The base class where to start searching
-     * @param signatures    Possible method signatures consisting of method name and parameters
-     * @return The found {@link Method} or {@code null}
-     * @throws RuntimeException If no method was found
-     */
-    public static Method pickMethod(Class<?> holder, MethodSignature... signatures) {
-        Class<?> depth = holder;
-        do {
-            for (MethodSignature signature : signatures) {
-                try {
-                    Method method = depth.getDeclaredMethod(signature.name(), signature.parameterTypes());
-                    if (!method.isAccessible()) {
-                        method.setAccessible(true);
-                    }
-                    return method;
-                } catch (NoSuchMethodException ignored) {
-                }
-            }
-        } while ((depth = depth.getSuperclass()) != null);
-        throw new RuntimeException("Failed to resolve method in " + holder + " using " + Arrays.toString(signatures));
-    }
+	/**
+	 * Recursively searches for (declared) methods at a specific class and all it's superclasses
+	 * @param holder        The base class where to start searching
+	 * @param signatures    Possible method signatures consisting of method name and parameters
+	 * @return The found {@link Method} or {@code null}
+	 * @throws RuntimeException If no method was found
+	 */
+	public static Method pickMethod(Class<?> holder, MethodSignature... signatures) {
+		Class<?> depth = holder;
+		do {
+			for (MethodSignature signature : signatures) {
+				try {
+					Method method = depth.getDeclaredMethod(signature.name(), signature.parameterTypes());
+					if (!method.isAccessible()) {
+						method.setAccessible(true);
+					}
+					return method;
+				} catch (NoSuchMethodException ignored) {
+				}
+			}
+		} while ((depth = depth.getSuperclass()) != null);
+		throw new RuntimeException("Failed to resolve method in " + holder + " using " + Arrays.toString(signatures));
+	}
 
 	public static Field getField(Class clazz, String fieldname) {
 		String key = clazz.getName() + ":" + fieldname;
